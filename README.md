@@ -4,6 +4,7 @@ I use Tampermonkey userscripts to add or modify features on websites I use often
 
 To use them, you'll need to install the Tampermonkey browser plugin, which you can find at https://www.tampermonkey.net/
 
+**How to install**: Once you have the Tampermonkey plugin installed, click the Direct Link to any of these scripts, and Tampermonkey will offer to install them for you. When I make updates, Tampermonkey will be able to detect the update and load the latest version.
 
 ## JIRA Assignee Quick Filter Menu
 
