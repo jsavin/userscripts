@@ -5,7 +5,7 @@ I use Tampermonkey userscripts to add or modify features on websites I use often
 To use them, you'll need to install the Tampermonkey browser plugin, which you can find at https://www.tampermonkey.net/
 
 
-## JIRA Assignee Quick Filter Dropdown Menu
+## JIRA Assignee Quick Filter Menu
 
 Modifies the QuickFilters on JIRA agile boards and backlogs by moving assignee filters into a dropdown menu for filtering to a single assignee. For people who use Quick Filters for assignees, the Quick Filters list can get quite long, and putting assignee filters in a menu saves space while making it easy to see which filter is active. Other filters are left in their normal place, and can be multi-selected along with assignee as needed.
 
