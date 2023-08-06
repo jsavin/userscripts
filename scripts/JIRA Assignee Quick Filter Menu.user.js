@@ -35,6 +35,7 @@
         const clearOption = document.createElement('option');
         clearOption.text = 'Any';
         select.appendChild(clearOption);
+		select.style.marginRight = '0.6em';
 
         // Create label
         const label = document.createElement('label');
