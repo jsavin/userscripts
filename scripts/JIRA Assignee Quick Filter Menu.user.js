@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Assignee Quick Filter Menu
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Convert assignee Quick Filters into dropdown menu with an "Any" option to clear assignee filter
 // @author       Jake Savin
 // @copyright    Copyright (c) 2023 Jake Savin
