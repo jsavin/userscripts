@@ -4,7 +4,11 @@
 // @version      0.1
 // @description  Convert assignee Quick Filters into dropdown menu with an "Any" option to clear assignee filter
 // @author       Jake Savin
-// @license 	 MIT
+// @copyright    Copyright (c) 2023 Jake Savin
+// @license      MIT
+// @downloadURL  https://github.com/jsavin/userscripts/raw/main/scripts/JIRA%20Assignee%20Quick%20Filter%20Menu.user.js
+// @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/JIRA%20Assignee%20Quick%20Filter%20Menu.user.js
+// @source       https://github.com/jsavin/userscripts/
 // @match        https://*/secure/RapidBoard.jspa?*
 // @grant        none
 // ==/UserScript==
