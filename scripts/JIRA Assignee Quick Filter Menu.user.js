@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Assignee Quick Filter Menu
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  Convert assignee Quick Filters into dropdown menu with an "Any" option to clear assignee filter
 // @author       Jake Savin
 // @copyright    Copyright (c) 2023 Jake Savin
@@ -20,41 +20,60 @@
         if (document.getElementById('js-work-quickfilters')) {
             clearInterval(waitUntilJiraIsLoaded);
             createQuickFiltersDropdown('board');
-        } else if (document.getElementById('js-plan-quickfilters')) {
-            clearInterval(waitUntilJiraIsLoaded);
             createQuickFiltersDropdown('backlog');
         }
     }, 500);
 
+    // Watch for the view to switch between the backlog (plan) view and board (work) view,
+    // and create the menu when the view changes.
     function observeViewChanges() {
+        // Set up observer for changing to the backlog view
         const ghxPlan = document.getElementById('ghx-plan');
         if (ghxPlan) {
-            const observer = new MutationObserver(() => {
+            const observerBacklog = new MutationObserver(() => {
                 if (ghxPlan.children.length > 0) {
                     console.log("Switching to backlog view");
                     createQuickFiltersDropdown('backlog');
-                    updateSelectedFilter('backlog') // TODO not working
-                } else {
-                    console.log("Switching to board view");
-                    createQuickFiltersDropdown('board');
-                    updateSelectedFilter('board') // TODO not working
+                    updateSelectedFilter('backlog');
                 }
             });
-            observer.observe(ghxPlan, { childList: true });
+            observerBacklog.observe(ghxPlan, { childList: true });
+        }
+
+        // Set up observer for changing to the board view
+        const ghxControlsWork = document.getElementById('ghx-controls-work');
+        if (ghxControlsWork) {
+            const observerBoard = new MutationObserver(() => {
+                if (ghxControlsWork.classList.contains('ghx-controls-list')) { // Adjust this condition as needed
+                    console.log("Switching to board view");
+                    createQuickFiltersDropdown('board');
+                    updateSelectedFilter('board');
+                }
+            });
+            observerBoard.observe(ghxControlsWork, { attributes: true });
         }
     }
 
     // Select the correct menu option after switching between backlog and board views
     function updateSelectedFilter(view) {
-        const filtersDivId = view === 'board' ? 'js-work-quickfilters' : 'js-plan-quickfilters';
+        console.log("Updating selected filter");
+        const filtersDivId = view === 'backlog' ? 'js-plan-quickfilters' : 'js-work-quickfilters';
+        const selectId = view === 'backlog' ? 'assignee-filter-backlog' : 'assignee-filter-board';
         const filtersDiv = document.getElementById(filtersDivId);
-        const activeFilter = filtersDiv.querySelector('.js-quickfilter-button.ghx-active');
-        const select = document.getElementById('assigneeDropdown');
+        const select = document.getElementById(selectId); // Access the correct select element for the view
 
-        if (activeFilter) {
-            select.value = activeFilter.dataset.filterId;
-        } else {
-            select.value = ''; // Default to "Any"
+        // Loop through the options in the select element
+        for (const option of select.options) {
+            const filterId = option.value;
+            // Find the corresponding filter link
+            const filterLink = filtersDiv.querySelector(`.js-quickfilter-button[data-filter-id="${filterId}"]`);
+
+            // Check if the filter link has the "ghx-active" class
+            if (filterLink && filterLink.classList.contains('ghx-active')) {
+                // Set this option as selected
+                select.value = filterId;
+                break;
+            }
         }
     }
 
@@ -71,6 +90,7 @@
     // assignee filter can be active at a time.
     function createQuickFiltersDropdown(view) {
         const containerId = view === 'board' ? 'js-work-quickfilters' : 'js-plan-quickfilters';
+        const selectId = view === 'board' ? 'assignee-filter-board' : 'assignee-filter-backlog';
         const container = document.getElementById(containerId);
         if (!container) return; // Exit if the container is not found
 
@@ -78,9 +98,9 @@
 
         // Create dropdown and add 'Clear' option
         const select = document.createElement('select');
+        select.id = selectId;
         select.addEventListener('change', () => {
             clearAndSetFilter(select, view);
-            select.blur(); // Remove focus from the menu
         });
         const clearOption = document.createElement('option');
         clearOption.text = 'Any';
@@ -116,13 +136,20 @@
                 }
             }
         });
+        updateSelectedFilter(view);
     }
 
     // Activate the selected filter and deactivate any other assignee filter that was previously active
     function clearAndSetFilter(select, view) {
-        const filtersDivId = view === 'board' ? 'js-work-quickfilters' : 'js-plan-quickfilters';
-        const filtersDiv = document.getElementById(filtersDivId);
-        const activeFilters = Array.from(filtersDiv.querySelectorAll('.js-quickfilter-button.ghx-active'));
+        const containerId = view === 'board' ? 'js-work-quickfilters' : 'js-plan-quickfilters';
+        const container = document.getElementById(containerId);
+        if (!container) return; // Exit if the container is not found
+
+        // Find only the active filters that correspond to options in our menu
+        const activeFilters = Array.from(container.querySelectorAll('.js-quickfilter-button.ghx-active'))
+            .filter((filter) => {
+                return Array.from(select.options).some((option) => option.value === filter.dataset.filterId);
+            });
 
         // Clear active filters
         activeFilters.forEach((filter) => {
@@ -132,8 +159,10 @@
         // Set new filter
         const selectedFilterId = select.value;
         if (selectedFilterId) {
-            const filterToClick = filtersDiv.querySelector(`.js-quickfilter-button[data-filter-id="${selectedFilterId}"]`);
+            const filterToClick = container.querySelector(`.js-quickfilter-button[data-filter-id="${selectedFilterId}"]`);
             filterToClick.click();
         }
+
+        select.blur();
     }
 })();
