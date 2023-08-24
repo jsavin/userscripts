@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         JIRA Assignee Quick Filter Menu
 // @namespace    http://tampermonkey.net/
-// @version      0.4
-// @description  Convert assignee Quick Filters into dropdown menu with an "Any" option to clear assignee filter
+// @version      0.5
+// @description  Convert assignee Quick Filters into dropdown menu with an "All" option to clear assignee filter
 // @author       Jake Savin
 // @copyright    Copyright (c) 2023 Jake Savin
 // @license      MIT
@@ -86,7 +86,7 @@
 
 
     // Make a dropdown menu with options for all the filters that appear to be for assignees,
-    // including an option at the top called "Any" to clear the assignee filter. Only one
+    // including an option at the top called "All" to clear the assignee filter. Only one
     // assignee filter can be active at a time.
     function createQuickFiltersDropdown(view) {
         const containerId = view === 'board' ? 'js-work-quickfilters' : 'js-plan-quickfilters';
@@ -103,7 +103,7 @@
             clearAndSetFilter(select, view);
         });
         const clearOption = document.createElement('option');
-        clearOption.text = 'Any';
+        clearOption.text = 'All';
         select.appendChild(clearOption);
         select.style.marginRight = '0.6em';
 
