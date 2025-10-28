@@ -22,3 +22,10 @@ Assignee filters are detected via the filter's Description as set in the Quick F
 **Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/JIRA%20Epics%20and%20Versions%20Hotkeys.user.js
 
 Adds hotkey support for toggling JIRA's Epics and Versions panels on agile backlog pages using Ctrl-E and Ctrl-V.
+
+## MLB.TV Custom Skip Duration and Jump Command
+
+**Direct Link**:
+https://github.com/jsavin/userscripts/raw/main/scripts/MLB.TV%20Custom%20Skip%20Duration.user.js
+
+Adds hotkeys to the player in MLB.TV: Comma (,) skips back 1 minute, and Period (.) skips forward 1 minute. The J key shows a Jump To pop-up, and you type minutes (1 or 2 digits) or hour and minutes (3 digits) and Enter to jump to a specific time.
