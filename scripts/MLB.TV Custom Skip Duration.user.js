@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         MLB.TV Custom Skip Duration
 // @namespace    http://tampermonkey.net/
-// @version      3.2
-// @description  Modify MLB.TV skip buttons, keyboard shortcuts, and time jump feature
+// @version      3.3
+// @description  Modify MLB.TV skip buttons, keyboard shortcuts, time jump, and relative jumps
 // @author       jsavin
 // @match        https://www.mlb.com/tv/*
+// @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/MLB.TV%20Custom%20Skip%20Duration.user.js
+// @downloadURL  https://github.com/jsavin/userscripts/raw/main/scripts/MLB.TV%20Custom%20Skip%20Duration.user.js
 // @grant        none
 // @run-at       document-end
 // ==/UserScript==
@@ -13,13 +15,17 @@
     'use strict';
 
     // Configure your preferred skip duration here (in seconds)
-    const SKIP_DURATION = 60; // Change to 60 for 1 minute
+    const SKIP_DURATION = 30; // Change to 60 for 1 minute
 
     console.log('[MLB Skip] Script starting...');
 
     let timeJumpMode = false;
     let timeJumpInput = '';
     let timeJumpOverlay = null;
+
+    let relativeJumpMode = false;
+    let relativeJumpDirection = null; // 'forward' or 'backward'
+    let relativeJumpInput = '';
 
     function setupCustomSkip() {
         const video = document.querySelector('video');
@@ -69,7 +75,7 @@
         console.log('[MLB Skip] Custom skip installed successfully!');
     }
 
-    function createTimeJumpOverlay() {
+    function createOverlay() {
         const overlay = document.createElement('div');
         overlay.style.cssText = `
             position: fixed;
@@ -125,6 +131,14 @@
         timeJumpOverlay.textContent = displayText;
     }
 
+    function updateRelativeJumpOverlay() {
+        if (!timeJumpOverlay) return;
+
+        const direction = relativeJumpDirection === 'forward' ? '+' : '-';
+        const minutes = relativeJumpInput || '_';
+        timeJumpOverlay.textContent = `Jump ${direction}${minutes} min`;
+    }
+
     function setupKeyboardShortcuts() {
         const video = document.querySelector('video');
         if (!video) {
@@ -133,8 +147,51 @@
         }
 
         document.addEventListener('keydown', (e) => {
-            // Don't interfere if user is typing in an input field (unless in time jump mode)
-            if (!timeJumpMode && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+            // Don't interfere if user is typing in an input field (unless in jump mode)
+            if (!timeJumpMode && !relativeJumpMode && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+                return;
+            }
+
+            // Relative jump mode active
+            if (relativeJumpMode) {
+                if (e.key >= '0' && e.key <= '9') {
+                    e.preventDefault();
+                    relativeJumpInput += e.key;
+                    updateRelativeJumpOverlay();
+                } else if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    relativeJumpInput = relativeJumpInput.slice(0, -1);
+                    updateRelativeJumpOverlay();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const minutes = parseInt(relativeJumpInput, 10);
+                    if (!isNaN(minutes) && minutes > 0) {
+                        const seconds = minutes * 60;
+                        if (relativeJumpDirection === 'forward') {
+                            video.currentTime += seconds;
+                            console.log(`[MLB Skip] Jumped forward ${minutes} minutes`);
+                        } else {
+                            video.currentTime -= seconds;
+                            console.log(`[MLB Skip] Jumped backward ${minutes} minutes`);
+                        }
+                    }
+                    relativeJumpMode = false;
+                    relativeJumpInput = '';
+                    relativeJumpDirection = null;
+                    if (timeJumpOverlay) {
+                        timeJumpOverlay.remove();
+                        timeJumpOverlay = null;
+                    }
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    relativeJumpMode = false;
+                    relativeJumpInput = '';
+                    relativeJumpDirection = null;
+                    if (timeJumpOverlay) {
+                        timeJumpOverlay.remove();
+                        timeJumpOverlay = null;
+                    }
+                }
                 return;
             }
 
@@ -186,13 +243,31 @@
                 e.preventDefault();
                 timeJumpMode = true;
                 timeJumpInput = '';
-                timeJumpOverlay = createTimeJumpOverlay();
+                timeJumpOverlay = createOverlay();
                 updateTimeJumpOverlay();
                 console.log('[MLB Skip] Time jump mode activated');
+            } else if (e.key === ']') {
+                e.preventDefault();
+                relativeJumpMode = true;
+                relativeJumpDirection = 'forward';
+                relativeJumpInput = '';
+                timeJumpOverlay = createOverlay();
+                updateRelativeJumpOverlay();
+                console.log('[MLB Skip] Relative jump forward mode activated');
+            } else if (e.key === '[') {
+                e.preventDefault();
+                relativeJumpMode = true;
+                relativeJumpDirection = 'backward';
+                relativeJumpInput = '';
+                timeJumpOverlay = createOverlay();
+                updateRelativeJumpOverlay();
+                console.log('[MLB Skip] Relative jump backward mode activated');
             }
         });
 
-        console.log('[MLB Skip] Keyboard shortcuts installed (. = forward, , = backward, J = time jump)');
+        console.log('[MLB Skip] Keyboard shortcuts installed');
+        console.log('[MLB Skip] . = forward, , = backward');
+        console.log('[MLB Skip] J = jump to time, ] = jump forward N min, [ = jump back N min');
     }
 
     // Wait for the page to load
