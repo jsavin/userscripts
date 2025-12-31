@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         GitHub Tab Navigator
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.0.1
 // @description  Navigate GitHub repository tabs with number keys (1-0)
-// @author       You
+// @author       jsavin
 // @match        https://github.com/*/*
 // @grant        none
 // ==/UserScript==
