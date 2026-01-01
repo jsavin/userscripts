@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GitHub Tab Navigator
 // @namespace    http://tampermonkey.net/
-// @version      2.0.1
+// @version      2.0.2
 // @description  Navigate GitHub repository tabs with number keys (1-0)
 // @author       jsavin
 // @match        https://github.com/*/*
@@ -12,6 +12,11 @@
     'use strict';
 
     document.addEventListener('keydown', function(e) {
+        // If Cmd is held, let the browser handle tab switching
+        if (e.metaKey) {
+            return;
+        }
+
         // Check if it's a digit (0-9)
         if (/[0-9]/.test(e.key)) {
             // Get the active element
