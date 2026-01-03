@@ -23,6 +23,12 @@ Assignee filters are detected via the filter's Description as set in the Quick F
 
 Adds hotkey support for toggling JIRA's Epics and Versions panels on agile backlog pages using Ctrl-E and Ctrl-V.
 
+## GitHub Tab Navigator
+
+**Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/GitHub%20Tab%20Navigator.user.js
+
+Navigate between repository tabs on GitHub.com using number keys 1-0, where keys 1-9 navigate to tabs 1-9, and 0 navigates to the 10th tab. Number keys are passed through to text input fields (like the search box) when they're active, so you can type numbers without triggering navigation. Cmd/Ctrl key is not needed.
+
 ## MLB.TV Custom Skip Duration and Jump Command
 
 **Direct Link**:
