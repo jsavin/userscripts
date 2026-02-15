@@ -29,6 +29,12 @@ Adds hotkey support for toggling JIRA's Epics and Versions panels on agile backl
 
 Navigate between repository tabs on GitHub.com using number keys 1-0, where keys 1-9 navigate to tabs 1-9, and 0 navigates to the 10th tab. Number keys are passed through to text input fields (like the search box) when they're active, so you can type numbers without triggering navigation. Cmd/Ctrl key is not needed.
 
+## LinkedIn Messaging Full Width
+
+**Direct Link:** https://github.com/jsavin/userscripts/raw/main/scripts/LinkedIn%20Messaging%20Full%20Width.user.js
+
+Expands the LinkedIn messaging conversation area to use the full browser width by hiding the right sidebar (ads and footer) while keeping the message list visible on the left. Perfect for maximizing your view of conversations on wider monitors.
+
 ## MLB.TV Custom Skip Duration and Jump Command
 
 **Direct Link**:
