@@ -6,6 +6,14 @@ To use them, you'll need to install the Tampermonkey browser plugin, which you c
 
 **How to install**: Once you have the Tampermonkey plugin installed, click the Direct Link to any of these scripts, and Tampermonkey will offer to install them for you. When I make updates, Tampermonkey will be able to detect the update and load the latest version.
 
+
+## Drummer Numpad Expand/Collapse
+
+**Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Numpad%20Expand%20Collapse.user.js
+
+Maps the numpad `+` key to expand and the numpad `-` key to collapse outline headings in [Drummer](https://drummer.land/), the web-based outliner by Dave Winer.
+
+
 ## JIRA Assignee Quick Filter Menu
 
 **Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/JIRA%20Assignee%20Quick%20Filter%20Menu.user.js
@@ -23,11 +31,13 @@ Assignee filters are detected via the filter's Description as set in the Quick F
 
 Adds hotkey support for toggling JIRA's Epics and Versions panels on agile backlog pages using Ctrl-E and Ctrl-V.
 
+
 ## GitHub Tab Navigator
 
 **Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/GitHub%20Tab%20Navigator.user.js
 
 Navigate between repository tabs on GitHub.com using number keys 1-0, where keys 1-9 navigate to tabs 1-9, and 0 navigates to the 10th tab. Number keys are passed through to text input fields (like the search box) when they're active, so you can type numbers without triggering navigation. Cmd/Ctrl key is not needed.
+
 
 ## LinkedIn Messaging Full Width
 
@@ -35,15 +45,10 @@ Navigate between repository tabs on GitHub.com using number keys 1-0, where keys
 
 Expands the LinkedIn messaging conversation area to use the full browser width by hiding the right sidebar (ads and footer) while keeping the message list visible on the left. Perfect for maximizing your view of conversations on wider monitors.
 
+
 ## MLB.TV Custom Skip Duration and Jump Command
 
 **Direct Link**:
 https://github.com/jsavin/userscripts/raw/main/scripts/MLB.TV%20Custom%20Skip%20Duration.user.js
 
 Adds hotkeys to the player in MLB.TV: Comma (,) skips back 1 minute, and Period (.) skips forward 1 minute. The J key shows a Jump To pop-up, and you type minutes (1 or 2 digits) or hour and minutes (3 digits) and Enter to jump to a specific time. You can also jump forward or back by N minutes using '[' and ']'.
-
-## Drummer Numpad Expand/Collapse
-
-**Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Numpad%20Expand%20Collapse.user.js
-
-Maps the numpad `+` key to expand and the numpad `-` key to collapse outline headings in [Drummer](https://drummer.land/), the web-based outliner by Dave Winer.
