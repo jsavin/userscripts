@@ -11,7 +11,7 @@ To use them, you'll need to install the Tampermonkey browser plugin, which you c
 
 **Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Numpad%20Expand%20Collapse.user.js
 
-Maps the numpad `+` key to expand and the numpad `-` key to collapse outline headings in [Drummer](https://drummer.land/), the web-based outliner by Dave Winer.
+Maps the numpad `+` key to expand, the numpad `-` key to collapse, and the numpad `*` key to expand all outline headings in [Drummer](https://drummer.land/), the web-based outliner by Dave Winer.
 
 
 ## JIRA Assignee Quick Filter Menu
