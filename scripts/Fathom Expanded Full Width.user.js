@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         Fathom Expanded Full Width
 // @namespace    https://fathom.video/
-// @version      1.1
+// @version      1.2
+// @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/Fathom%20Expanded%20Full%20Width.user.js
+// @downloadURL  https://github.com/jsavin/userscripts/raw/main/scripts/Fathom%20Expanded%20Full%20Width.user.js
 // @description  Expands the video to full page width when in "Expanded" layout mode on fathom.video, with the notes panel stacked below
 // @author       jsavin
 // @match        https://fathom.video/share/*
