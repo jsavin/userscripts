@@ -14,6 +14,20 @@ To use them, you'll need to install the Tampermonkey browser plugin, which you c
 Maps the numpad `+` key to expand, the numpad `-` key to collapse, and the numpad `*` key to expand all outline headings in [Drummer](https://drummer.land/), the web-based outliner by Dave Winer.
 
 
+## Fathom Expanded Full Width
+
+**Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/Fathom%20Expanded%20Full%20Width.user.js
+
+Expands the video to the full width of the page when in "Expanded" layout mode on [Fathom](https://fathom.video/). In Expanded mode, Fathom normally shows the video at a fixed width alongside a notes panel. This script hides the notes panel and stretches the video to use the full page width, then automatically reverts when you switch back to Regular mode.
+
+
+## GitHub Tab Navigator
+
+**Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/GitHub%20Tab%20Navigator.user.js
+
+Navigate between repository tabs on GitHub.com using number keys 1-0, where keys 1-9 navigate to tabs 1-9, and 0 navigates to the 10th tab. Number keys are passed through to text input fields (like the search box) when they're active, so you can type numbers without triggering navigation. Cmd/Ctrl key is not needed.
+
+
 ## JIRA Assignee Quick Filter Menu
 
 **Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/JIRA%20Assignee%20Quick%20Filter%20Menu.user.js
@@ -30,13 +44,6 @@ Assignee filters are detected via the filter's Description as set in the Quick F
 **Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/JIRA%20Epics%20and%20Versions%20Hotkeys.user.js
 
 Adds hotkey support for toggling JIRA's Epics and Versions panels on agile backlog pages using Ctrl-E and Ctrl-V.
-
-
-## GitHub Tab Navigator
-
-**Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/GitHub%20Tab%20Navigator.user.js
-
-Navigate between repository tabs on GitHub.com using number keys 1-0, where keys 1-9 navigate to tabs 1-9, and 0 navigates to the 10th tab. Number keys are passed through to text input fields (like the search box) when they're active, so you can type numbers without triggering navigation. Cmd/Ctrl key is not needed.
 
 
 ## LinkedIn Messaging Full Width
