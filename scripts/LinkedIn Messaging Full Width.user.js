@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         LinkedIn Messaging Full Width
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
+// @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/LinkedIn%20Messaging%20Full%20Width.user.js
+// @downloadURL  https://github.com/jsavin/userscripts/raw/main/scripts/LinkedIn%20Messaging%20Full%20Width.user.js
 // @description  Full width messaging - hide right sidebar, keep message list
 // @match        https://www.linkedin.com/messaging/*
 // @grant        GM_addStyle
