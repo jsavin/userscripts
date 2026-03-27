@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.0
+// @version      1.1
 // @description  Highlights "Jake" (case-insensitive) in Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions on outline load.
 // @author       jsavin
 // @match        https://drummer.land/*
@@ -60,8 +60,21 @@
         });
     }
 
-    // ── Recursively expand ancestors of nodes containing "jake" ──────────────
-    // Returns true if this li (or any descendant) contains the word.
+    // ── Fully expand an li and ALL of its descendants (one-way only) ──────────
+    // Never collapses anything that is already expanded.
+    function fullExpandSubtree(li) {
+        li.classList.remove('collapsed');
+        const childOl = li.querySelector(':scope > ol');
+        if (childOl) {
+            Array.from(childOl.children).forEach(fullExpandSubtree);
+        }
+    }
+
+    // ── Recursively open the path to Jake nodes; fully expand Jake nodes ──────
+    // Returns true if this li (or any descendant) contains "jake".
+    // - Ancestors of Jake nodes: expanded just enough to make the Jake node visible.
+    // - Nodes whose own text contains "jake": fully expanded (all descendants shown).
+    // Never removes an already-absent "collapsed" class (no-op) and never adds one.
     function expandToJake(li) {
         // Check this node's own text
         const wrapper = li.querySelector(':scope > .concord-wrapper');
@@ -74,18 +87,27 @@
             JAKE_RE.lastIndex = 0;
         }
 
-        // Recurse into children
+        if (selfMatch) {
+            // This heading itself contains "Jake": fully expand it and all its
+            // descendants so every child is visible.
+            fullExpandSubtree(li);
+            return true;
+        }
+
+        // Recurse into children to find Jake deeper in the tree
         const childOl = li.querySelector(':scope > ol');
         let childMatch = false;
         if (childOl) {
             childMatch = Array.from(childOl.children).some(expandToJake);
         }
 
-        if (selfMatch || childMatch) {
-            li.classList.remove('collapsed');   // un-hide this node's children
-            return true;
+        if (childMatch) {
+            // A descendant has "jake": expand this node just enough to reveal
+            // the path, but leave unrelated sibling subtrees as-is.
+            li.classList.remove('collapsed');
         }
-        return false;
+
+        return childMatch;
     }
 
     // ── Auto-expand topmost month heading in an outliner ──────────────────────
