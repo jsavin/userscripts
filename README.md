@@ -7,6 +7,12 @@ To use them, you'll need to install the Tampermonkey browser plugin, which you c
 **How to install**: Once you have the Tampermonkey plugin installed, click the Direct Link to any of these scripts, and Tampermonkey will offer to install them for you. When I make updates, Tampermonkey will be able to detect the update and load the latest version.
 
 
+## Drummer Jake Highlighter
+
+**Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Jake%20Highlighter.user.js
+
+Highlights every occurrence of the word "Jake" (case-insensitive) in yellow with black text across all [Drummer](https://drummer.land/) outlines. Automatically updates when expanding or collapsing headlines. When an outline loads, if "Jake" appears anywhere under the topmost month heading, the outline is expanded to make those highlighted occurrences visible.
+
 ## Drummer Numpad Expand/Collapse
 
 **Direct Link**: https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Numpad%20Expand%20Collapse.user.js
