@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.1
-// @description  Highlights "Jake" (case-insensitive) in Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions on outline load.
+// @version      1.2
+// @description  Highlights "Jake" (case-insensitive) in Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions on outline load. Toggle with Alt+J.
 // @author       jsavin
 // @match        https://drummer.land/*
 // @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Jake%20Highlighter.user.js
@@ -15,10 +15,13 @@
     'use strict';
 
     // ── Constants ─────────────────────────────────────────────────────────────
-    const JAKE_RE  = /jake/gi;
-    const HL_OPEN  = '<mark class="jake-hl">';
-    const HL_CLOSE = '</mark>';
+    const JAKE_RE   = /jake/gi;
+    const HL_OPEN   = '<mark class="jake-hl">';
+    const HL_CLOSE  = '</mark>';
     const ORIG_ATTR = 'data-jake-original';
+
+    // Toggle state – highlighting starts ON
+    let highlightEnabled = true;
 
     // ── Inject CSS ────────────────────────────────────────────────────────────
     const style = document.createElement('style');
@@ -34,11 +37,17 @@
 
     // ── Highlight a single .concord-text element ──────────────────────────────
     function highlightEl(el) {
-        // Use stored original to avoid re-processing already-marked HTML
+        // Cache the original plain text so we can always restore or re-apply cleanly
         let orig = el.getAttribute(ORIG_ATTR);
         if (orig === null) {
-            orig = el.textContent;           // first visit: cache plain text
+            orig = el.textContent;
             el.setAttribute(ORIG_ATTR, orig);
+        }
+
+        if (!highlightEnabled) {
+            // Restore plain text when toggled off
+            if (el.innerHTML !== orig) el.innerHTML = orig;
+            return;
         }
 
         JAKE_RE.lastIndex = 0;
@@ -71,12 +80,10 @@
     }
 
     // ── Recursively open the path to Jake nodes; fully expand Jake nodes ──────
-    // Returns true if this li (or any descendant) contains "jake".
-    // - Ancestors of Jake nodes: expanded just enough to make the Jake node visible.
-    // - Nodes whose own text contains "jake": fully expanded (all descendants shown).
-    // Never removes an already-absent "collapsed" class (no-op) and never adds one.
+    // - Nodes whose own text contains "jake": fully expanded (all children shown).
+    // - Ancestors of Jake nodes: opened just enough to reveal the Jake node.
+    // Never adds "collapsed" — only removes it.
     function expandToJake(li) {
-        // Check this node's own text
         const wrapper = li.querySelector(':scope > .concord-wrapper');
         const textEl  = wrapper ? wrapper.querySelector('.concord-text') : null;
         let selfMatch = false;
@@ -88,8 +95,7 @@
         }
 
         if (selfMatch) {
-            // This heading itself contains "Jake": fully expand it and all its
-            // descendants so every child is visible.
+            // This heading itself contains "Jake": fully open it and all children
             fullExpandSubtree(li);
             return true;
         }
@@ -102,8 +108,7 @@
         }
 
         if (childMatch) {
-            // A descendant has "jake": expand this node just enough to reveal
-            // the path, but leave unrelated sibling subtrees as-is.
+            // A descendant has "jake": open this node to reveal the path
             li.classList.remove('collapsed');
         }
 
@@ -124,6 +129,16 @@
         clearTimeout(hlTimer);
         hlTimer = setTimeout(highlightAll, delay || 60);
     }
+
+    // ── Alt+J toggle ──────────────────────────────────────────────────────────
+    document.addEventListener('keydown', function (e) {
+        if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key === 'j') {
+            e.preventDefault();
+            e.stopPropagation();
+            highlightEnabled = !highlightEnabled;
+            highlightAll();
+        }
+    }, true); // capture phase so we see it before Drummer's handlers
 
     // ── MutationObserver ──────────────────────────────────────────────────────
     const observer = new MutationObserver(function (mutations) {
@@ -151,7 +166,7 @@
 
             if (mut.type === 'childList' && mut.addedNodes.length > 0) {
                 needsHL = true;
-                // Detect fresh outline load (added directly to root ol)
+                // Detect fresh outline load (children added to the root ol)
                 const parentOl = mut.target;
                 if (parentOl.classList &&
                     parentOl.classList.contains('concord') &&
@@ -193,14 +208,49 @@
         });
     }
 
-    // ── Initial run ───────────────────────────────────────────────────────────
-    setTimeout(function () {
-        document.querySelectorAll('.divOutliner').forEach(function (outliner) {
-            if (getComputedStyle(outliner).display !== 'none') {
-                autoExpand(outliner);
+    // ── Initial run with retry ────────────────────────────────────────────────
+    // Drummer loads outline content asynchronously. We poll until at least one
+    // .concord-text element is present, then run the initial highlight + expand.
+    // The MutationObserver above handles subsequent loads, but if content was
+    // already in the DOM before our observer started we need this initial pass.
+    let initAttempts = 0;
+    const MAX_ATTEMPTS = 20;  // up to ~10 seconds total
+
+    function tryInit() {
+        const activeOutliner = Array.from(
+            document.querySelectorAll('.divOutliner')
+        ).find(o => getComputedStyle(o).display !== 'none');
+
+        const hasContent = activeOutliner &&
+            activeOutliner.querySelector('.concord-text') !== null;
+
+        if (hasContent) {
+            autoExpand(activeOutliner);
+            highlightAll();
+            return; // success
+        }
+
+        initAttempts++;
+        if (initAttempts < MAX_ATTEMPTS) {
+            setTimeout(tryInit, 500); // retry every 500ms
+        }
+    }
+
+    // First attempt after a short delay to let Drummer's JS settle
+    setTimeout(tryInit, 300);
+
+    // Also hook into concord.onResume if available – fires when the outliner
+    // becomes active/ready, which is a reliable signal that content is present.
+    if (window.concord && typeof window.concord.onResume === 'function') {
+        window.concord.onResume(function () {
+            const activeOutliner = Array.from(
+                document.querySelectorAll('.divOutliner')
+            ).find(o => getComputedStyle(o).display !== 'none');
+            if (activeOutliner) {
+                autoExpand(activeOutliner);
+                highlightAll();
             }
         });
-        highlightAll();
-    }, 600);
+    }
 
 })();
