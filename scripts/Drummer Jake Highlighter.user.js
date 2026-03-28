@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.2
-// @description  Highlights "Jake" (case-insensitive) in Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions on outline load. Toggle with Alt+J.
+// @version      1.3
+// @description  Highlights "Jake" (case-insensitive) in Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions on outline load. Toggle with Alt+J (Option+J on macOS).
 // @author       jsavin
 // @match        https://drummer.land/*
 // @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Jake%20Highlighter.user.js
@@ -130,9 +130,11 @@
         hlTimer = setTimeout(highlightAll, delay || 60);
     }
 
-    // ── Alt+J toggle ──────────────────────────────────────────────────────────
+    // ── Alt/Option+J toggle ───────────────────────────────────────────────────
+    // Uses e.code ('KeyJ') rather than e.key ('j') so it works correctly on
+    // macOS where Option+J produces '∆' and e.key would never equal 'j'.
     document.addEventListener('keydown', function (e) {
-        if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key === 'j') {
+        if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.code === 'KeyJ') {
             e.preventDefault();
             e.stopPropagation();
             highlightEnabled = !highlightEnabled;
