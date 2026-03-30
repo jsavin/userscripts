@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.7
+// @version      1.8
 // @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions. Strips highlight marks from both the system clipboard and Drummer's internal clipboard when copying. Toggle with Alt+J (Option+J on macOS).
 // @author       jsavin
 // @match        https://drummer.land/*
@@ -178,17 +178,22 @@
             }
         }
 
-        // Part 2: clean Drummer's internal jQuery clipboard
-        // jQuery 1.x stores element data in jQuery.cache keyed by a numeric expando.
-        if (typeof jQuery !== 'undefined' && jQuery.cache) {
-            Object.keys(jQuery.cache).forEach(function (k) {
-                var entry = jQuery.cache[k];
-                if (entry && entry.data && entry.data.clipboard) {
-                    jQuery(entry.data.clipboard).find('mark.jake-hl').each(function () {
-                        jQuery(this).replaceWith(document.createTextNode(this.textContent));
-                    });
-                }
-            });
+        // Part 2: clean window.concordClipboard (Drummer's global cross-outliner clipboard)
+        // ConcordEvents sets concordClipboard = {text: opmlText, data: jQueryClonedLI}
+        // before the 'copy' event fires, so we can clean it here.
+        if (typeof concordClipboard !== 'undefined' && concordClipboard) {
+            // Clean the DOM clipboard (.data) - unwrap any mark.jake-hl elements
+            if (concordClipboard.data && concordClipboard.data.find) {
+                concordClipboard.data.find('mark.jake-hl').each(function () {
+                    jQuery(this).replaceWith(document.createTextNode(this.textContent));
+                });
+            }
+            // Clean the OPML text clipboard (.text) - strip escaped mark tags
+            if (typeof concordClipboard.text === 'string' && concordClipboard.text.indexOf('jake-hl') !== -1) {
+                concordClipboard.text = concordClipboard.text.replace(
+                    /&lt;mark\b[^&]*&gt;(.*?)&lt;\/mark&gt;/g, '$1'
+                );
+            }
         }
     }, true);
 
