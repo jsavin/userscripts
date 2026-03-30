@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.4
-// @description  Highlights "Jake" (case-insensitive) in Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions on outline load. Only active in read-only outlines (not in outlines you own). Toggle with Alt+J (Option+J on macOS).
+// @version      1.5
+// @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions. Strips highlight marks from clipboard on copy. Toggle with Alt+J (Option+J on macOS).
 // @author       jsavin
 // @match        https://drummer.land/*
 // @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Jake%20Highlighter.user.js
@@ -150,6 +150,46 @@
             highlightAll();
         }
     }, true); // capture phase so we see it before Drummer's handlers
+
+
+    // ── Strip highlight marks from clipboard on copy ─────────────────────────────────
+    // When the user copies text that contains highlighted spans, prevent the
+    // <mark class="jake-hl"> tags from ending up in the clipboard. Instead write
+    // the plain unwrapped text (and clean HTML) to the clipboard ourselves.
+    document.addEventListener('copy', function (e) {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed) return;
+
+        // Only act if the selection touches a .concord-text node that has marks
+        const range = sel.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        const root = container.nodeType === 1 ? container : container.parentElement;
+        if (!root) return;
+
+        // Check whether any jake-hl mark is within (or is) the selection root
+        const hasMarks = root.querySelector
+            ? root.querySelector('mark.jake-hl') !== null
+            : root.closest && root.closest('mark.jake-hl') !== null;
+        if (!hasMarks) return;
+
+        // Clone the range contents so we can scrub the marks without touching the DOM
+        const fragment = range.cloneContents();
+        const tmp = document.createElement('div');
+        tmp.appendChild(fragment);
+
+        // Unwrap every <mark class="jake-hl"> – replace with its text content
+        tmp.querySelectorAll('mark.jake-hl').forEach(function (mark) {
+            const text = document.createTextNode(mark.textContent);
+            mark.parentNode.replaceChild(text, mark);
+        });
+
+        const cleanHTML = tmp.innerHTML;
+        const cleanText = tmp.textContent;
+
+        e.preventDefault();
+        e.clipboardData.setData('text/html', cleanHTML);
+        e.clipboardData.setData('text/plain', cleanText);
+    }, true);
 
     // ── MutationObserver ───────────────────────────────────────────────────────────────────────────────────
     const observer = new MutationObserver(function (mutations) {
