@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.8
+// @version      1.9
 // @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions. Strips highlight marks from both the system clipboard and Drummer's internal clipboard when copying. Toggle with Alt+J (Option+J on macOS).
 // @author       jsavin
 // @match        https://drummer.land/*
@@ -178,6 +178,9 @@
             }
         }
 
+    }, true);
+
+    document.addEventListener('copy', function (e) {
         // Part 2: clean window.concordClipboard (Drummer's global cross-outliner clipboard)
         // ConcordEvents sets concordClipboard = {text: opmlText, data: jQueryClonedLI}
         // before the 'copy' event fires, so we can clean it here.
@@ -195,7 +198,7 @@
                 );
             }
         }
-    }, true);
+    }, false); // bubble: runs after pasteBin.on('copy') re-sets concordClipboard
 
     // ── MutationObserver ───────────────────────────────────────────────────────────────────────────────────
     const observer = new MutationObserver(function (mutations) {
