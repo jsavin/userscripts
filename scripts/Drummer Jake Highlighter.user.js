@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.6
-// @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions. Strips highlight marks from clipboard when copying nodes. Toggle with Alt+J (Option+J on macOS).
+// @version      1.7
+// @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions. Strips highlight marks from both the system clipboard and Drummer's internal clipboard when copying. Toggle with Alt+J (Option+J on macOS).
 // @author       jsavin
 // @match        https://drummer.land/*
 // @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Jake%20Highlighter.user.js
@@ -153,31 +153,42 @@
 
 
     // ── Strip highlight marks from clipboard on copy ─────────────────────────────────
-    // Drummer copies nodes by writing their OPML text into a hidden <pre> inside
-    // a .pasteBin div, then letting the browser do a native copy from it.
-    // Because the OPML text is built from the live DOM (which our script has
-    // modified with <mark> wrappers), the literal text
-    //   <mark class="jake-hl">jake</mark>
-    // ends up HTML-escaped inside the <pre>'s innerHTML as:
-    //   &lt;mark class="jake-hl"&gt;jake&lt;/mark&gt;
-    // We intercept the copy event on that <pre> (capture phase) and strip
-    // those escaped tags from innerHTML *before* the browser reads the content.
+    // Drummer copies nodes via two mechanisms that both need cleaning:
+    //
+    // 1. SYSTEM CLIPBOARD (for paste into external apps):
+    //    Drummer writes OPML text into a hidden <pre> inside .pasteBin and lets
+    //    the browser do a native copy. Our <mark> wrappers end up HTML-escaped
+    //    in the <pre> as literal text: &lt;mark class="jake-hl"&gt;jake&lt;/mark&gt;
+    //    We strip those escaped tags before the browser reads the content.
+    //
+    // 2. INTERNAL CLIPBOARD (for Cmd+V paste within Drummer):
+    //    Drummer stores a deep DOM clone in jQuery.cache under the key "clipboard"
+    //    on the concord root element. That clone contains our actual
+    //    <mark class="jake-hl"> DOM nodes. We scan jQuery.cache and unwrap them.
     document.addEventListener('copy', function (e) {
-        const pre = e.target;
-        if (!pre || pre.tagName !== 'PRE') return;
-        const pb = pre.closest ? pre.closest('.pasteBin') : null;
-        if (!pb) return;                       // only act on Drummer's pasteBin
+        // Part 1: clean the pasteBin <pre> for the system clipboard
+        var pre = e.target;
+        if (pre && pre.tagName === 'PRE' && pre.closest && pre.closest('.pasteBin')) {
+            var html = pre.innerHTML;
+            if (html.includes('jake-hl')) {
+                var cleaned = html.replace(
+                    /&lt;mark\b[^&]*&gt;(.*?)&lt;\/mark&gt;/g, '$1'
+                );
+                if (cleaned !== html) pre.innerHTML = cleaned;
+            }
+        }
 
-        const html = pre.innerHTML;
-        if (!html.includes('jake-hl')) return; // nothing to clean
-
-        // Strip &lt;mark class="jake-hl"&gt;TEXT&lt;/mark&gt; -> TEXT
-        // The \b and [^&]* handle any attributes on the tag, just in case.
-        const cleaned = html.replace(
-            /&lt;mark\b[^&]*&gt;(.*?)&lt;\/mark&gt;/g, '$1'
-        );
-        if (cleaned !== html) {
-            pre.innerHTML = cleaned;
+        // Part 2: clean Drummer's internal jQuery clipboard
+        // jQuery 1.x stores element data in jQuery.cache keyed by a numeric expando.
+        if (typeof jQuery !== 'undefined' && jQuery.cache) {
+            Object.keys(jQuery.cache).forEach(function (k) {
+                var entry = jQuery.cache[k];
+                if (entry && entry.data && entry.data.clipboard) {
+                    jQuery(entry.data.clipboard).find('mark.jake-hl').each(function () {
+                        jQuery(this).replaceWith(document.createTextNode(this.textContent));
+                    });
+                }
+            });
         }
     }, true);
 
