@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.5
-// @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions. Strips highlight marks from clipboard on copy. Toggle with Alt+J (Option+J on macOS).
+// @version      1.6
+// @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions. Strips highlight marks from clipboard when copying nodes. Toggle with Alt+J (Option+J on macOS).
 // @author       jsavin
 // @match        https://drummer.land/*
 // @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Jake%20Highlighter.user.js
@@ -153,42 +153,32 @@
 
 
     // ── Strip highlight marks from clipboard on copy ─────────────────────────────────
-    // When the user copies text that contains highlighted spans, prevent the
-    // <mark class="jake-hl"> tags from ending up in the clipboard. Instead write
-    // the plain unwrapped text (and clean HTML) to the clipboard ourselves.
+    // Drummer copies nodes by writing their OPML text into a hidden <pre> inside
+    // a .pasteBin div, then letting the browser do a native copy from it.
+    // Because the OPML text is built from the live DOM (which our script has
+    // modified with <mark> wrappers), the literal text
+    //   <mark class="jake-hl">jake</mark>
+    // ends up HTML-escaped inside the <pre>'s innerHTML as:
+    //   &lt;mark class="jake-hl"&gt;jake&lt;/mark&gt;
+    // We intercept the copy event on that <pre> (capture phase) and strip
+    // those escaped tags from innerHTML *before* the browser reads the content.
     document.addEventListener('copy', function (e) {
-        const sel = window.getSelection();
-        if (!sel || sel.isCollapsed) return;
+        const pre = e.target;
+        if (!pre || pre.tagName !== 'PRE') return;
+        const pb = pre.closest ? pre.closest('.pasteBin') : null;
+        if (!pb) return;                       // only act on Drummer's pasteBin
 
-        // Only act if the selection touches a .concord-text node that has marks
-        const range = sel.getRangeAt(0);
-        const container = range.commonAncestorContainer;
-        const root = container.nodeType === 1 ? container : container.parentElement;
-        if (!root) return;
+        const html = pre.innerHTML;
+        if (!html.includes('jake-hl')) return; // nothing to clean
 
-        // Check whether any jake-hl mark is within (or is) the selection root
-        const hasMarks = root.querySelector
-            ? root.querySelector('mark.jake-hl') !== null
-            : root.closest && root.closest('mark.jake-hl') !== null;
-        if (!hasMarks) return;
-
-        // Clone the range contents so we can scrub the marks without touching the DOM
-        const fragment = range.cloneContents();
-        const tmp = document.createElement('div');
-        tmp.appendChild(fragment);
-
-        // Unwrap every <mark class="jake-hl"> – replace with its text content
-        tmp.querySelectorAll('mark.jake-hl').forEach(function (mark) {
-            const text = document.createTextNode(mark.textContent);
-            mark.parentNode.replaceChild(text, mark);
-        });
-
-        const cleanHTML = tmp.innerHTML;
-        const cleanText = tmp.textContent;
-
-        e.preventDefault();
-        e.clipboardData.setData('text/html', cleanHTML);
-        e.clipboardData.setData('text/plain', cleanText);
+        // Strip &lt;mark class="jake-hl"&gt;TEXT&lt;/mark&gt; -> TEXT
+        // The \b and [^&]* handle any attributes on the tag, just in case.
+        const cleaned = html.replace(
+            /&lt;mark\b[^&]*&gt;(.*?)&lt;\/mark&gt;/g, '$1'
+        );
+        if (cleaned !== html) {
+            pre.innerHTML = cleaned;
+        }
     }, true);
 
     // ── MutationObserver ───────────────────────────────────────────────────────────────────────────────────
