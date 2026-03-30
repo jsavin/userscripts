@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.3
-// @description  Highlights "Jake" (case-insensitive) in Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions on outline load. Toggle with Alt+J (Option+J on macOS).
+// @version      1.4
+// @description  Highlights "Jake" (case-insensitive) in Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions on outline load. Only active in read-only outlines (not in outlines you own). Toggle with Alt+J (Option+J on macOS).
 // @author       jsavin
 // @match        https://drummer.land/*
 // @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Jake%20Highlighter.user.js
@@ -14,7 +14,7 @@
 (function () {
     'use strict';
 
-    // ── Constants ─────────────────────────────────────────────────────────────
+    // ── Constants ──────────────────────────────────────────────────────────────────────────────
     const JAKE_RE   = /jake/gi;
     const HL_OPEN   = '<mark class="jake-hl">';
     const HL_CLOSE  = '</mark>';
@@ -23,7 +23,15 @@
     // Toggle state – highlighting starts ON
     let highlightEnabled = true;
 
-    // ── Inject CSS ────────────────────────────────────────────────────────────
+    // ── Read-only check ───────────────────────────────────────────────────────────────────
+    // Returns true only if the given outliner element contains a read-only outline.
+    // Drummer sets class 'readonly' on the root <ol> of outlines you don't own.
+    function isReadOnlyOutliner(outliner) {
+        const rootOl = outliner.querySelector('ol.concord');
+        return rootOl ? rootOl.classList.contains('readonly') : false;
+    }
+
+    // ── Inject CSS ─────────────────────────────────────────────────────────────────────────────────
     const style = document.createElement('style');
     style.textContent = `
         mark.jake-hl {
@@ -35,7 +43,7 @@
     `;
     document.head.appendChild(style);
 
-    // ── Highlight a single .concord-text element ──────────────────────────────
+    // ── Highlight a single .concord-text element ──────────────────────────────────────────────
     function highlightEl(el) {
         // Cache the original plain text so we can always restore or re-apply cleanly
         let orig = el.getAttribute(ORIG_ATTR);
@@ -61,15 +69,16 @@
         if (el.innerHTML !== newHTML) el.innerHTML = newHTML;
     }
 
-    // ── Apply highlighting to every visible outliner ──────────────────────────
+    // ── Apply highlighting to every visible outliner ──────────────────────────────────────────
     function highlightAll() {
         document.querySelectorAll('.divOutliner').forEach(function (outliner) {
             if (getComputedStyle(outliner).display === 'none') return;
+            if (!isReadOnlyOutliner(outliner)) return;
             outliner.querySelectorAll('.concord-text').forEach(highlightEl);
         });
     }
 
-    // ── Fully expand an li and ALL of its descendants (one-way only) ──────────
+    // ── Fully expand an li and ALL of its descendants (one-way only) ────────────────────
     // Never collapses anything that is already expanded.
     function fullExpandSubtree(li) {
         li.classList.remove('collapsed');
@@ -85,7 +94,7 @@
     // Never adds "collapsed" — only removes it.
     function expandToJake(li) {
         const wrapper = li.querySelector(':scope > .concord-wrapper');
-        const textEl  = wrapper ? wrapper.querySelector('.concord-text') : null;
+        const textEl   = wrapper ? wrapper.querySelector('.concord-text') : null;
         let selfMatch = false;
         if (textEl) {
             const txt = textEl.getAttribute(ORIG_ATTR) || textEl.textContent;
@@ -123,14 +132,14 @@
         if (firstMonth) expandToJake(firstMonth);
     }
 
-    // ── Debounced highlight ───────────────────────────────────────────────────
+    // ── Debounced highlight ─────────────────────────────────────────────────────────────────────────────────
     let hlTimer = null;
     function scheduleHighlight(delay) {
         clearTimeout(hlTimer);
         hlTimer = setTimeout(highlightAll, delay || 60);
     }
 
-    // ── Alt/Option+J toggle ───────────────────────────────────────────────────
+    // ── Alt/Option+J toggle ─────────────────────────────────────────────────────────────────────────────────
     // Uses e.code ('KeyJ') rather than e.key ('j') so it works correctly on
     // macOS where Option+J produces '∆' and e.key would never equal 'j'.
     document.addEventListener('keydown', function (e) {
@@ -142,7 +151,7 @@
         }
     }, true); // capture phase so we see it before Drummer's handlers
 
-    // ── MutationObserver ──────────────────────────────────────────────────────
+    // ── MutationObserver ───────────────────────────────────────────────────────────────────────────────────
     const observer = new MutationObserver(function (mutations) {
         let needsHL = false;
         let newOutliner = null;
@@ -191,8 +200,10 @@
 
         if (newOutliner) {
             setTimeout(function () {
-                autoExpand(newOutliner);
-                highlightAll();
+                if (isReadOnlyOutliner(newOutliner)) {
+                    autoExpand(newOutliner);
+                    highlightAll();
+                }
             }, 120);
         } else if (needsHL) {
             scheduleHighlight();
@@ -202,15 +213,15 @@
     const outlines = document.getElementById('idOutlines');
     if (outlines) {
         observer.observe(outlines, {
-            subtree:          true,
-            attributes:       true,
-            attributeFilter:  ['class', 'style'],
-            childList:        true,
-            characterData:    true
+            subtree:         true,
+            attributes:      true,
+            attributeFilter: ['class', 'style'],
+            childList:       true,
+            characterData:   true
         });
     }
 
-    // ── Initial run with retry ────────────────────────────────────────────────
+    // ── Initial run with retry ─────────────────────────────────────────────────────────────────────────────────
     // Drummer loads outline content asynchronously. We poll until at least one
     // .concord-text element is present, then run the initial highlight + expand.
     // The MutationObserver above handles subsequent loads, but if content was
@@ -227,8 +238,10 @@
             activeOutliner.querySelector('.concord-text') !== null;
 
         if (hasContent) {
-            autoExpand(activeOutliner);
-            highlightAll();
+            if (isReadOnlyOutliner(activeOutliner)) {
+                autoExpand(activeOutliner);
+                highlightAll();
+            }
             return; // success
         }
 
@@ -249,8 +262,10 @@
                 document.querySelectorAll('.divOutliner')
             ).find(o => getComputedStyle(o).display !== 'none');
             if (activeOutliner) {
-                autoExpand(activeOutliner);
-                highlightAll();
+                if (isReadOnlyOutliner(activeOutliner)) {
+                    autoExpand(activeOutliner);
+                    highlightAll();
+                }
             }
         });
     }
