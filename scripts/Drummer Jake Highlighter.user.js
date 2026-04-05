@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Drummer Jake Highlighter
 // @namespace    https://github.com/jsavin
-// @version      1.10
-// @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions. Strips highlight marks from both the system clipboard and Drummer's internal clipboard when copying. Toggle with Alt+J (Option+J on macOS).
+// @version      1.11
+// @description  Highlights "Jake" (case-insensitive) in read-only Drummer outlines; auto-expands the topmost month heading to reveal Jake mentions; when any heading is manually expanded, auto-expands paths to all Jake mentions in its subtree. Strips highlight marks from both the system clipboard and Drummer's internal clipboard when copying. Toggle with Alt+J (Option+J on macOS).
 // @author       jsavin
 // @match        https://drummer.land/*
 // @updateURL    https://github.com/jsavin/userscripts/raw/main/scripts/Drummer%20Jake%20Highlighter.user.js
@@ -96,6 +96,7 @@
         const wrapper = li.querySelector(':scope > .concord-wrapper');
         const textEl   = wrapper ? wrapper.querySelector('.concord-text') : null;
         let selfMatch = false;
+
         if (textEl) {
             const txt = textEl.getAttribute(ORIG_ATTR) || textEl.textContent;
             JAKE_RE.lastIndex = 0;
@@ -128,8 +129,20 @@
     function autoExpand(outliner) {
         const rootOl = outliner.querySelector('ol.concord');
         if (!rootOl) return;
+
         const firstMonth = rootOl.firstElementChild;
         if (firstMonth) expandToJake(firstMonth);
+    }
+
+    // ── Expand paths to Jake within a specific node's subtree ────────────────
+    // Called when the user manually expands a heading. Searches all direct
+    // child <li>s of the expanded node and opens paths to Jake in each.
+    function expandToJakeInSubtree(li) {
+        const childOl = li.querySelector(':scope > ol');
+        if (!childOl) return;
+        Array.from(childOl.children).forEach(function (childLi) {
+            expandToJake(childLi);
+        });
     }
 
     // ── Debounced highlight ─────────────────────────────────────────────────────────────────────────────────
@@ -150,7 +163,6 @@
             highlightAll();
         }
     }, true); // capture phase so we see it before Drummer's handlers
-
 
     // ── Strip highlight marks from clipboard on copy ─────────────────────────────────
     // Drummer copies nodes via two mechanisms that both need cleaning:
@@ -177,7 +189,6 @@
                 if (cleaned !== html) pre.innerHTML = cleaned;
             }
         }
-
     }, true);
 
     document.addEventListener('copy', function (e) {
@@ -191,6 +202,7 @@
                     jQuery(this).replaceWith(document.createTextNode(this.textContent));
                 });
             }
+
             // Clean the OPML text clipboard (.text) - strip raw HTML mark tags
             if (typeof concordClipboard.text === 'string' && concordClipboard.text.indexOf('jake-hl') !== -1) {
                 concordClipboard.text = concordClipboard.text.replace(
@@ -204,6 +216,7 @@
     const observer = new MutationObserver(function (mutations) {
         let needsHL = false;
         let newOutliner = null;
+        let expandedNodes = []; // nodes that were just expanded by the user
 
         for (const mut of mutations) {
             if (mut.type === 'attributes') {
@@ -221,6 +234,13 @@
                 if (t.classList && t.classList.contains('concord-node') &&
                     mut.attributeName === 'class') {
                     needsHL = true;
+
+                    // Detect expand: old class list had 'collapsed', new one doesn't
+                    if (highlightEnabled &&
+                        mut.oldValue && mut.oldValue.includes('collapsed') &&
+                        !t.classList.contains('collapsed')) {
+                        expandedNodes.push(t);
+                    }
                 }
             }
 
@@ -247,6 +267,24 @@
             }
         }
 
+        // Handle user-initiated expand: open paths to Jake in the expanded subtree
+        if (expandedNodes.length > 0) {
+            // Defer slightly so the DOM settles after Drummer's own expand logic
+            setTimeout(function () {
+                let didExpand = false;
+                expandedNodes.forEach(function (li) {
+                    const outliner = li.closest('.divOutliner');
+                    if (outliner && isReadOnlyOutliner(outliner)) {
+                        expandToJakeInSubtree(li);
+                        didExpand = true;
+                    }
+                });
+                if (didExpand) {
+                    highlightAll();
+                }
+            }, 60);
+        }
+
         if (newOutliner) {
             setTimeout(function () {
                 if (isReadOnlyOutliner(newOutliner)) {
@@ -262,11 +300,12 @@
     const outlines = document.getElementById('idOutlines');
     if (outlines) {
         observer.observe(outlines, {
-            subtree:         true,
-            attributes:      true,
-            attributeFilter: ['class', 'style'],
-            childList:       true,
-            characterData:   true
+            subtree:            true,
+            attributes:         true,
+            attributeFilter:    ['class', 'style'],
+            attributeOldValue:  true,    // needed to detect collapsed → expanded transitions
+            childList:          true,
+            characterData:      true
         });
     }
 
@@ -318,5 +357,4 @@
             }
         });
     }
-
 })();
