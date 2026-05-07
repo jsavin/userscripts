@@ -65,3 +65,10 @@ Expands the LinkedIn messaging conversation area to use the full browser width b
 https://github.com/jsavin/userscripts/raw/main/scripts/MLB.TV%20Custom%20Skip%20Duration.user.js
 
 Adds hotkeys to the player in MLB.TV: Comma (,) skips back 1 minute, and Period (.) skips forward 1 minute. The J key shows a Jump To pop-up, and you type minutes (1 or 2 digits) or hour and minutes (3 digits) and Enter to jump to a specific time. You can also jump forward or back by N minutes using '[' and ']'.
+
+
+## Claude Design – Scale Main Content
+
+**Direct Link:** https://github.com/jsavin/userscripts/raw/main/scripts/Claude%20Design%20Scale%20Main%20Content.user.js
+
+Keeps the left sidebar at its native scale while zooming the main content panel on claude.ai/design pages. The zoom level defaults to 150% and can be changed by editing the `ZOOM_LEVEL` constant at the top of the script (1.5 = 150%, 1.75 = 175%). Uses the CSS `zoom` property so layout, scrollbars, and click targets all reflow correctly at the scaled size.
